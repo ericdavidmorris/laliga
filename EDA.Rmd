@@ -1,0 +1,37 @@
+---
+title: "EDA"
+author: "Eric Morris"
+date: "12/28/2018"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(viridis)
+library(readxl)
+library(ggrepel)
+```
+
+##Data Import
+
+All data was pulled manually from Squawka's Online Statistics Tool (scraping was difficult due to UI). Statistics were filtered for players with a minimum of 8 games played and were pulled on 12/28, during La Liga's Winter Break (all teams have played 17/38 matches except Real Madrid with 16). All statistics are per 90 min. 
+
+```{r Data Import}
+
+liga_stats = 
+  read_excel("./data/Per90Stats.xlsx", col_names = TRUE) %>% 
+  janitor::clean_names() %>% 
+  spread(key = stat_category, value = p90) %>% 
+  janitor::clean_names() %>% 
+  mutate(goalsplusassists = (goals_scored + assists_created))
+
+liga_stats %>% 
+  ggplot(aes(x = chances_created, y = goalsplusassists)) +
+  geom_point() +
+  geom_text_repel(aes(label = ifelse(goalsplusassists > 0.75, player, '')), angle = 45, hjust = 0.5, vjust = 1.0, size = 3) +
+  geom_text_repel(aes(label = ifelse(chances_created > 2.5, player, '')), angle = 45, hjust = 0.5, vjust = 1.0, size = 3)
+
+```
+
