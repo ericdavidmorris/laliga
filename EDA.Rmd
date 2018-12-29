@@ -14,20 +14,20 @@ library(readxl)
 library(ggrepel)
 ```
 
-##Data Import
+##La Liga Data Import
 
 All data was pulled manually from Squawka's Online Statistics Tool (scraping was difficult due to UI). Statistics were filtered for players with a minimum of 8 games played and were pulled on 12/28, during La Liga's Winter Break (all teams have played 17/38 matches except Real Madrid with 16). All statistics are per 90 minutes. 
 
-```{r Data Import}
+```{r La Liga Data Import}
 liga_stats = 
-  read_excel("./data/Per90Stats.xlsx", col_names = TRUE) %>% 
+  read_excel("./data/LigaPer90Stats.xlsx", col_names = TRUE) %>% 
   janitor::clean_names() %>% 
   spread(key = stat_category, value = p90) %>% 
   janitor::clean_names() %>% 
   mutate(goalsplusassists = (goals_scored + assists_created))
 ```
 
-```{r Charts}
+```{r La Liga Charts}
 liga_stats %>% 
   ggplot(aes(x = chances_created, y = goalsplusassists, color = team)) +
   geom_point(alpha = 0.75) +
@@ -98,5 +98,59 @@ liga_stats %>%
   scale_y_continuous(breaks = seq(0, 2.10, 0.10)) + 
   theme_bw() +
   theme(legend.position = "bottom") 
+```
+
+## EPL Data Import
+
+All data was pulled manually from Squawka's Online Statistics Tool (scraping was difficult due to UI). Statistics were filtered for players with a minimum of 10 games played and were pulled on 12/29, after the Boxing Day matches (all teams have played 19 matches). All statistics are per 90 minutes. Filtered for > 0.74 chances created per 90. 
+
+```{r EPL Data Import}
+epl_stats = 
+  read_excel("./data/EPLPer90Stats.xlsx", col_names = TRUE) %>% 
+  janitor::clean_names() %>% 
+  spread(key = stat_category, value = p90) %>% 
+  janitor::clean_names() %>% 
+  mutate(goalsplusassists = (goals_scored + assists_created))
+
+epl_stats %>% 
+  group_by(team) %>% 
+  summarize()
+```
+
+```{r EPL Chart}
+epl_stats %>% 
+  ggplot(aes(x = chances_created, y = goalsplusassists, color = team)) +
+  geom_point(alpha = 0.75) +
+  geom_text_repel(aes(label = ifelse(goalsplusassists > 0.6, player, ifelse(chances_created > 1.50, player, ''))), angle = 30, size = 2) +
+  scale_color_manual(values = c("Arsenal" = "firebrick1",
+                                "Bournemouth" = "gray0",
+                                "Brighton" = "dodgerblue",
+                                "Burnley" = "maroon",
+                                "Cardiff" = "brown1",     
+                                "Chelsea" = "blue",
+                                "Crystal Palace" = "purple1",
+                                "Everton" = "mediumblue",
+                                "Fulham" = "gray48",        
+                                "Huddersfield" = "yellow3",   
+                                "Leicester" = "cornflowerblue",       
+                                "Liverpool" = "red2",       
+                                "Manchester City" = "cadetblue2",  
+                                "Manchester United" = "firebrick3",
+                                "Newcastle" = "gray12",       
+                                "Southampton" = "tomato3",    
+                                "Tottenham" = "snow3",       
+                                "Watford" = "yellow3",       
+                                "West Ham" = "violetred4",      
+                                "Wolverhampton" = "orange1")) + 
+  labs(title = "Premier League Offensive Leaders through 19 matches", 
+       y = "Goals plus Assists per 90", 
+       x = "Chances created per 90", 
+       color = "Player's Team",
+       caption = "Data: Squawka Statistics. Graph: @ericdavidmorris") + 
+  scale_x_continuous(breaks = seq(0.70, 4.00, 0.10)) + 
+  scale_y_continuous(breaks = seq(0, 1.7, 0.10)) + 
+  theme_bw() +
+  theme(legend.position = "bottom") 
+
 ```
 
