@@ -163,7 +163,7 @@ epl_stats %>%
                                 "Watford" = "yellow3",       
                                 "West Ham" = "violetred4",      
                                 "Wolverhampton" = "orange1")) + 
-  labs(title = "Premier League Offensive Leaders through 19 matches", 
+  labs(title = "Premier League and La Liga as of 12/29", 
        y = "Goals plus Assists per 90", 
        x = "Chances created per 90", 
        color = "Player's Team",
@@ -175,3 +175,27 @@ epl_stats %>%
 ```
 
 ![](EDA_files/figure-markdown_github/EPL%20Chart-1.png)
+
+EPL and La Liga merged stats
+----------------------------
+
+``` r
+merged = 
+  bind_rows(epl_stats, liga_stats)
+
+merged %>% 
+  ggplot(aes(x = chances_created, y = goalsplusassists, color = league)) +
+  geom_point(alpha = 0.75) +
+  geom_text_repel(aes(label = ifelse(goalsplusassists > 0.6, player, ifelse(chances_created > 1.7, player, ''))), angle = 30, size = 2) +
+  labs(title = "Premier League and La Liga Creators as of 12/29", 
+       y = "Goals plus Assists per 90", 
+       x = "Chances created per 90", 
+       color = "Player's Team",
+       caption = "Data: Squawka Statistics. Graph: @ericdavidmorris") + 
+  scale_x_continuous(breaks = seq(0.70, 4.00, 0.10)) + 
+  scale_y_continuous(breaks = seq(0, 2.10, 0.10)) + 
+  theme_bw() +
+  theme(legend.position = "bottom") 
+```
+
+![](EDA_files/figure-markdown_github/unnamed-chunk-1-1.png)
