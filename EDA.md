@@ -1,24 +1,14 @@
----
-title: "EDA"
-author: "Eric Morris"
-date: "12/28/2018"
-output: github_document
----
+EDA
+================
+Eric Morris
+12/28/2018
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+Data Import
+-----------
 
-library(tidyverse)
-library(viridis)
-library(readxl)
-library(ggrepel)
-```
+All data was pulled manually from Squawka's Online Statistics Tool (scraping was difficult due to UI). Statistics were filtered for players with a minimum of 8 games played and were pulled on 12/28, during La Liga's Winter Break (all teams have played 17/38 matches except Real Madrid with 16). All statistics are per 90 minutes.
 
-##Data Import
-
-All data was pulled manually from Squawka's Online Statistics Tool (scraping was difficult due to UI). Statistics were filtered for players with a minimum of 8 games played and were pulled on 12/28, during La Liga's Winter Break (all teams have played 17/38 matches except Real Madrid with 16). All statistics are per 90 minutes. 
-
-```{r Data Import}
+``` r
 liga_stats = 
   read_excel("./data/Per90Stats.xlsx", col_names = TRUE) %>% 
   janitor::clean_names() %>% 
@@ -27,7 +17,7 @@ liga_stats =
   mutate(goalsplusassists = (goals_scored + assists_created))
 ```
 
-```{r Charts}
+``` r
 liga_stats %>% 
   ggplot(aes(x = chances_created, y = goalsplusassists, color = team)) +
   geom_point(alpha = 0.75) +
@@ -61,7 +51,11 @@ liga_stats %>%
   scale_y_continuous(breaks = seq(0, 2.10, 0.10)) + 
   theme_bw() +
   theme(legend.position = "bottom") 
+```
 
+![](EDA_files/figure-markdown_github/Charts-1.png)
+
+``` r
 # Chart without Messi
 
 liga_stats %>% 
@@ -100,3 +94,4 @@ liga_stats %>%
   theme(legend.position = "bottom") 
 ```
 
+![](EDA_files/figure-markdown_github/Charts-2.png)
