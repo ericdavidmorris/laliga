@@ -21,7 +21,7 @@ knitr::opts_chunk$set(
 
 ## La Liga
 
-All data was pulled manually from WhoScored (scraping was difficult due to UI). Statistics were filtered for players with a WhoScored's automatic minimum appearances filter (players with total appearances greater than the average number of appearances in Primera Division) and then furthere filtered to only include players with >500 minutes played. Statistics were pulled on 12/29, during La Liga's Winter Break (all teams have played 17/38 matches except Real Madrid with 16). 
+All data was pulled manually from WhoScored (scraping was difficult due to UI). Statistics were filtered for players with a WhoScored's automatic minimum appearances filter (players with total appearances greater than the average number of appearances in Primera Division) and then further filtered to only include players with >500 minutes played. Statistics were pulled on 12/29, during La Liga's Winter Break (all teams have played 17/38 matches except Real Madrid with 16). 
 
 ```{r Import}
 ws_liga_stats = 
@@ -125,4 +125,112 @@ ws_liga_stats %>%
 ```
 
 
+## Serie A
+
+
+All data was pulled manually from WhoScored (scraping was difficult due to UI). Statistics were filtered for players with a WhoScored's automatic minimum appearances filter (players with total appearances greater than the average number of appearances in Serie A) and then further filtered to only include players with >500 minutes played. Statistics were pulled on 12/30, all teams have played 19 matches. 
+
+```{r Italy Import}
+ws_seriea_stats = 
+  read_excel("./data/SerieAWhoScoredStats.xlsx", col_names = TRUE) %>% 
+  janitor::clean_names() %>% 
+  separate(player, into = c("name", "team"), sep = ",") %>%
+  mutate(goals_per_90 = (goals / mins) * 90,
+         assists_per_90 = (assists / mins) * 90,
+         gpa_per_90 = goals_per_90 + assists_per_90,
+         shots_kp_game = shots_per_game + key_passes_per_g)
+
+ws_seriea_stats %>% 
+  group_by(team) %>% 
+  summarize()
+  
+```
+
+
+```{r Serie A Chart}
+quantile(ws_seriea_stats$shots_kp_game, c(0.5, 0.75, 0.80, 0.85, 0.90))
+quantile(ws_seriea_stats$gpa_per_90, c(0.5, 0.75, 0.80, 0.85, 0.90))
+
+ws_seriea_stats %>% 
+  ggplot(aes(x = shots_kp_game, y = gpa_per_90, color = team)) +
+  geom_point(alpha = 0.75) +
+  geom_text_repel(aes(label = ifelse(gpa_per_90 >= 0.535, name, ifelse(shots_kp_game >= 4.2, name, ''))), angle = 30, size = 2) +
+  scale_color_manual(values = c("AC Milan" = "firebrick2",
+                                "Atalanta" = "mediumblue",
+                                "Bologna" = "navy",    
+                                "Cagliari" = "midnightblue",    
+                                "Chievo" = "gold1",        
+                                "Empoli" = "coral1",        
+                                "Fiorentina" = "purple4",    
+                                "Frosinone" = "yellow3",     
+                                "Genoa" = "royalblue4",       
+                                "Inter" = "royalblue",
+                                "Juventus" = "black",      
+                                "Lazio" = "lightblue",         
+                                "Napoli" = "dodgerblue",
+                                "Parma Calcio 1913" = "gray",         
+                                "Roma" = "darkorange",        
+                                "Sampdoria" = "royalblue2", 
+                                "Sassuolo" = "seagreen",
+                                "SPAL 2013" = "steelblue3",   
+                                "Torino" = "tomato4",
+                                "Udinese" = "gray47")) + 
+  labs(title = "Serie A Offensive Leaders after 19 matches", 
+       y = "Goals plus Assists per 90", 
+       x = "Shots plus Key Passes per game", 
+       color = "Player's Team",
+       caption = "Data: WhoScored Graph: @ericdavidmorris
+       Marked players are in top 10% of either category") + 
+  scale_x_continuous(breaks = seq(0, 8.2, 0.20)) + 
+  scale_y_continuous(breaks = seq(0, 1.20, 0.10)) + 
+  theme_bw() +
+  theme(legend.position = "bottom") 
+
+```
+
+
+## La Liga + Serie A 
+
+```{r}
+italy_spain_merged = 
+  bind_rows(ws_liga_stats, ws_seriea_stats)
+
+quantile(italy_spain_merged$shots_kp_game, c(0.5, 0.75, 0.80, 0.85, 0.90, 0.95))
+quantile(italy_spain_merged$gpa_per_90, c(0.5, 0.75, 0.80, 0.85, 0.90, 0.95))
+quantile(italy_spain_merged$ws_rating, c(0.5, 0.75, 0.80, 0.85, 0.90, 0.95))
+
+italy_spain_merged %>% 
+  ggplot(aes(x = shots_kp_game, y = gpa_per_90, color = league)) +
+  geom_point(alpha = 0.5) +
+  geom_text_repel(aes(label = ifelse(gpa_per_90 >= 0.512, name, ifelse(shots_kp_game >= 3.78, name, ''))), angle = 30, size = 2) +
+  labs(title = "La Liga and Serie A Top Creators as of 12/29", 
+       y = "Goals plus Assists per 90", 
+       x = "Shots plus Key Passes per game", 
+       color = "League",
+       caption = "Data: Squawka Statistics. Graph: @ericdavidmorris
+       Marked players are in top 10% of either category") + 
+  scale_x_continuous(breaks = seq(0, 8.4, 0.20)) + 
+  scale_y_continuous(breaks = seq(0, 1.9, 0.10)) + 
+  theme_bw() +
+  scale_color_manual(values = c("La Liga" = "firebrick1",
+                                "Serie A" = "green4")) + 
+  theme(legend.position = "bottom") 
+
+italy_spain_merged %>% 
+  ggplot(aes(x = ws_rating, y = shots_kp_game, color = league)) +
+  geom_point(alpha = 0.5) +
+  geom_text_repel(aes(label = ifelse(shots_kp_game >= 4.44, name, ifelse(ws_rating >= 7.22, name, ''))), angle = 30, size = 2) +
+  labs(title = "La Liga and Serie A Top Creators as of 12/29", 
+       y = "Shots plus Key Passes per game", 
+       x = "WhoScored Rating", 
+       color = "League",
+       caption = "Data: Squawka Statistics. Graph: @ericdavidmorris
+       Marked players are in top 5% of either category") + 
+  scale_x_continuous(breaks = seq(0, 8.8, 0.20)) + 
+  scale_y_continuous(breaks = seq(0, 8.4, 0.20)) + 
+  theme_bw() +
+  scale_color_manual(values = c("La Liga" = "firebrick1",
+                                "Serie A" = "green4")) + 
+  theme(legend.position = "bottom") 
+```
 
