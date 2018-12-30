@@ -15,7 +15,7 @@ library(ggrepel)
 
 knitr::opts_chunk$set(
   fig.align = "center",
-  dpi = 300
+  dpi = 800
 )
 ```
 
