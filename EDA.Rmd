@@ -12,6 +12,11 @@ library(tidyverse)
 library(viridis)
 library(readxl)
 library(ggrepel)
+
+knitr::opts_chunk$set(
+  fig.align = "center",
+  dpi = 300
+)
 ```
 
 ##La Liga Data Import
@@ -31,7 +36,7 @@ liga_stats =
 liga_stats %>% 
   ggplot(aes(x = chances_created, y = goalsplusassists, color = team)) +
   geom_point(alpha = 0.75) +
-  geom_text_repel(aes(label = ifelse(goalsplusassists > 0.6, player, ifelse(chances_created > 1.75, player, ''))), angle = 30, size = 2) +
+  geom_text_repel(aes(label = ifelse(goalsplusassists > 0.6, player, ifelse(chances_created > 1.65, player, ''))), angle = 30, size = 2) +
   scale_color_manual(values = c("Alaves" = "blue",
                                "Athletic" = "red2",
                                "Atletico" = "red",
@@ -52,7 +57,7 @@ liga_stats %>%
                                "Valencia"  = "gray0",
                                "Valladolid" = "mediumpurple",
                                "Villarreal" = "yellow3")) + 
-  labs(title = "La Liga Offensive Leaders at Christmas Break", 
+  labs(title = "La Liga Creative Leaders at Christmas Break", 
        y = "Goals plus Assists per 90", 
        x = "Chances created per 90", 
        color = "Player's Team",
@@ -89,7 +94,7 @@ liga_stats %>%
                                "Valencia"  = "gray0",
                                "Valladolid" = "mediumpurple",
                                "Villarreal" = "yellow3")) + 
-  labs(title = "La Liga Offensive Leaders at Christmas Break (Messi Filtered)", 
+  labs(title = "La Liga Creative Leaders at Christmas Break (Messi Filtered)", 
        y = "Goals plus Assists per 90", 
        x = "Chances created per 90", 
        color = "Player's Team",
@@ -172,6 +177,140 @@ merged %>%
   scale_x_continuous(breaks = seq(0.70, 4.00, 0.10)) + 
   scale_y_continuous(breaks = seq(0, 2.10, 0.10)) + 
   theme_bw() +
+  theme(legend.position = "bottom") 
+```
+
+## Bundesliga
+
+All data was pulled manually from Squawka's Online Statistics Tool (scraping was difficult due to UI). Statistics were filtered for players with a minimum of 10 games played and were pulled on 12/29. All statistics are per 90 minutes. Filtered for > 0.94 chances created per 90. 
+
+```{r German Data Import}
+bund_stats = 
+  read_excel("./data/BundesligaPer90Stats.xlsx", col_names = TRUE) %>% 
+  janitor::clean_names() %>% 
+  spread(key = stat_category, value = p90) %>% 
+  janitor::clean_names() %>% 
+  mutate(goalsplusassists = (goals_scored + assists_created))
+
+bund_stats %>% 
+  group_by(team) %>% 
+  summarize()
+```
+
+```{r German Chart}
+bund_stats %>% 
+  ggplot(aes(x = chances_created, y = goalsplusassists, color = team)) +
+  geom_point(alpha = 0.75) +
+  geom_text_repel(aes(label = ifelse(goalsplusassists > 0.6, player, ifelse(chances_created > 1.6, player, ''))), angle = 30, size = 2) +
+  scale_color_manual(values = c("Augsburg" = "dimgray",
+                                "Bayern Munich" = "firebrick2",
+                                "Dortmund" = "gold1",
+                                "Düsseldorf" = "tomato3",  
+                                "Frankfurt" = "gray0",
+                                "Freiburg" = "gray25",       
+                                "Hannover" = "chartreuse4",       
+                                "Hertha" = "dodgerblue2",       
+                                "Hoffenheim" = "blue1",     
+                                "Leipzig" = "navy",    
+                                "Leverkusen" = "firebrick4", 
+                                "Mainz" = "red1",       
+                                "Mönchengladbach" = "green3",
+                                "Nürnberg" = "tomato4",     
+                                "Schalke" = "blue3",        
+                                "Stuttgart" = "orangered2",    
+                                "Werder Bremen" = "springgreen3", 
+                                "Wolfsburg" = "limegreen")) + 
+  labs(title = "Bundesliga Creative Leaders at Christmas Break", 
+       y = "Goals plus Assists per 90", 
+       x = "Chances created per 90", 
+       color = "Player's Team",
+       caption = "Data: Squawka Statistics. Graph: @ericdavidmorris") + 
+  scale_x_continuous(breaks = seq(0.9, 3.2, 0.10)) + 
+  scale_y_continuous(breaks = seq(0, 2.8, 0.10)) + 
+  theme_bw() +
+  theme(legend.position = "bottom") 
+
+```
+
+
+## Serie A
+
+All data was pulled manually from Squawka's Online Statistics Tool (scraping was difficult due to UI). Statistics were filtered for players with a minimum of 10 games played and were pulled on 12/29. All statistics are per 90 minutes. Filtered for > 0.94 chances created per 90. 
+
+
+```{r Italian Data Import}
+serie_stats = 
+  read_excel("./data/SerieAPer90Stats.xlsx", col_names = TRUE) %>% 
+  janitor::clean_names() %>% 
+  spread(key = stat_category, value = p90) %>% 
+  janitor::clean_names() %>% 
+  mutate(goalsplusassists = (goals_scored + assists_created))
+
+serie_stats %>% 
+  group_by(team) %>% 
+  summarize()
+```
+
+```{r Italian Chart}
+serie_stats %>% 
+  ggplot(aes(x = chances_created, y = goalsplusassists, color = team)) +
+  geom_point(alpha = 0.75) +
+  geom_text_repel(aes(label = ifelse(goalsplusassists > 0.6, player, ifelse(chances_created > 1.7, player, ''))), angle = 30, size = 2) +
+  scale_color_manual(values = c("Atalanta" = "mediumblue",
+                                "Bologna" = "navy",    
+                                "Cagliari" = "midnightblue",    
+                                "Chievo" = "gold1",        
+                                "Empoli" = "coral1",        
+                                "Fiorentina" = "purple4",    
+                                "Frosinone" = "yellow3",     
+                                "Genoa" = "royalblue4",       
+                                "Internazionale" = "royalblue",
+                                "Juventus" = "black",      
+                                "Lazio" = "lightblue",         
+                                "Milan" = "firebrick2",        
+                                "Napoli" = "dodgerblue",
+                                "Parma" = "gray",         
+                                "Roma" = "darkorange",        
+                                "Sampdoria" = "royalblue2", 
+                                "Sassuolo" = "seagreen",
+                                "SPAL" = "steelblue3",   
+                                "Torino" = "tomato4",
+                                "Udinese" = "gray47")) + 
+  labs(title = "Serie A Creative Leaders on 12/29", 
+       y = "Goals plus Assists per 90", 
+       x = "Chances created per 90", 
+       color = "Player's Team",
+       caption = "Data: Squawka Statistics. Graph: @ericdavidmorris") + 
+  scale_x_continuous(breaks = seq(0.9, 4.9, 0.10)) + 
+  scale_y_continuous(breaks = seq(0, 1.3, 0.10)) + 
+  theme_bw() +
+  theme(legend.position = "bottom") 
+
+```
+
+## Top 4 Leagues Merged
+
+```{r}
+top4_merged = 
+  bind_rows(epl_stats, liga_stats, serie_stats, bund_stats)
+
+top4_merged %>% 
+  ggplot(aes(x = chances_created, y = goalsplusassists, color = league)) +
+  geom_point(alpha = 0.5) +
+  geom_text_repel(aes(label = ifelse(goalsplusassists >= 0.83, player, ifelse(chances_created >= 2.57, player, ''))), angle = 30, size = 2) +
+  labs(title = "Premier League, La Liga, Serie A and Bundesliga Top Creators as of 12/29", 
+       y = "Goals plus Assists per 90", 
+       x = "Chances created per 90", 
+       color = "Player's Team",
+       caption = "Data: Squawka Statistics. Graph: @ericdavidmorris
+       Marked players are in top 10% of category") + 
+  scale_x_continuous(breaks = seq(0.70, 4.9, 0.10)) + 
+  scale_y_continuous(breaks = seq(0, 2.8, 0.10)) + 
+  theme_bw() +
+  scale_color_manual(values = c("Bundesliga" = "red2",
+                                "La Liga" = "black",
+                                "Premier League" = "purple1",
+                                "Serie A" = "chartreuse4")) + 
   theme(legend.position = "bottom") 
 ```
 
