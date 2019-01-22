@@ -1,0 +1,270 @@
+---
+title: "Understat Primera Vuelta"
+author: "Eric Morris"
+date: "1/21/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(viridis)
+library(readxl)
+library(ggrepel)
+
+knitr::opts_chunk$set(
+  fig.align = "center",
+  dpi = 800
+)
+```
+
+## La Liga Primera Vuelta (Half Season) Metrics from Understat
+
+All data was pulled manually from Understat (scraping was difficult due to UI). Statistics were filtered for players with a minimum of 500 minutes played. Keepers were filtered out.
+
+```{r Import}
+understat = 
+  read_excel("./data/understat_primeravuelta.xlsx", col_names = TRUE) %>% 
+  janitor::clean_names() %>% 
+  separate(x_g, into = c("xg", "trash"), sep = "\\+") %>% 
+  separate(xg, into = c("xg", "trash2"), sep = "\\-") %>% 
+  select(-trash, -trash2) %>% 
+  separate(n_px_g, into = c("npxg", "trash"), sep = "\\+") %>% 
+  separate(npxg, into = c("npxg", "trash2"), sep = "\\-") %>% 
+  select(-trash, -trash2) %>% 
+  separate(x_a, into = c("xa", "trash"), sep = "\\+") %>% 
+  separate(xa, into = c("xa", "trash2"), sep = "\\-") %>% 
+  select(-trash, -trash2) %>% 
+  mutate(xg90_plus_xa90 = x_g90 + x_a90,
+         npxg90_plus_xa90 = n_px_g90 + x_a90)
+```
+
+```{r Charts}
+quantile(understat$n_px_g90, c(0.5, 0.75, 0.80, 0.85, 0.90))
+
+quantile(understat$x_a90, c(0.5, 0.75, 0.80, 0.85, 0.90))
+
+understat %>% 
+  group_by(team) %>% 
+  summarize()
+
+understat %>% 
+  ggplot(aes(x = n_px_g90, y = x_a90, color = team, size = npg)) +
+  geom_point(alpha = 0.75) +
+  geom_text_repel(aes(label = ifelse(n_px_g90 >= 0.336, player, ifelse(x_a90 >= 0.2, player, ''))), angle = 30, size = 2) +
+  scale_color_manual(values = c("Athletic Club" = "red2",
+                                "Alaves" = "blue",
+                                "Atletico Madrid" = "red",
+                                "Barcelona" = "maroon",
+                                "Celta Vigo" = "lightblue",
+                                "Eibar" = "dodgerblue4",
+                                "Espanyol" = "mediumblue",
+                                "Getafe" = "royalblue2",
+                                "Girona" = "firebrick1",
+                                "Leganes" = "dodgerblue",
+                                "Levante" = "red4",
+                                "Rayo Vallecano" = "gold",
+                                "Real Betis" = "green3",
+                                "Real Madrid" = "purple1",
+                                "Real Sociedad" = "royalblue3",
+                                "Real Valladolid" = "mediumpurple",
+                                "SD Huesca" = "midnightblue",
+                                "Sevilla" = "firebrick3",
+                                "Valencia"  = "gray0",
+                                "Villarreal" = "yellow3")) + 
+  labs(title = "La Liga Primera Vuelta Leaders", 
+       y = "Expected Assists per 90", 
+       x = "Non-Penalty Expected Goals per 90", 
+       color = "Player's Team",
+       size = "Non-Penalty Goals",
+       caption = "Data: understat.com Graph: @ericdavidmorris
+       Marked players are in top 10% of either category, min. 500 minutes played") + 
+  scale_x_continuous(breaks = seq(0, 0.75, 0.05)) + 
+  scale_y_continuous(breaks = seq(0, 0.6, 0.05)) + 
+  theme_bw() +
+  theme(legend.position = "bottom") 
+
+#Messi filtered out
+
+no_messi = understat %>% 
+  filter(player != "Lionel Messi")
+
+quantile(no_messi$n_px_g90, c(0.5, 0.75, 0.80, 0.85, 0.90))
+
+quantile(no_messi$x_a90, c(0.5, 0.75, 0.80, 0.85, 0.90))
+
+no_messi %>% 
+  ggplot(aes(x = n_px_g90, y = x_a90, color = team, size = npg)) +
+  geom_point(alpha = 0.75) +
+  geom_text_repel(aes(label = ifelse(n_px_g90 >= 0.33, player, ifelse(x_a90 >= 0.2, player, ''))), angle = 30, size = 2) +
+  scale_color_manual(values = c("Athletic Club" = "red2",
+                                "Alaves" = "blue",
+                                "Atletico Madrid" = "red",
+                                "Barcelona" = "maroon",
+                                "Celta Vigo" = "lightblue",
+                                "Eibar" = "dodgerblue4",
+                                "Espanyol" = "mediumblue",
+                                "Getafe" = "royalblue2",
+                                "Girona" = "firebrick1",
+                                "Leganes" = "dodgerblue",
+                                "Levante" = "red4",
+                                "Rayo Vallecano" = "gold",
+                                "Real Betis" = "green3",
+                                "Real Madrid" = "purple1",
+                                "Real Sociedad" = "royalblue3",
+                                "Real Valladolid" = "mediumpurple",
+                                "SD Huesca" = "midnightblue",
+                                "Sevilla" = "firebrick3",
+                                "Valencia"  = "gray0",
+                                "Villarreal" = "yellow3")) + 
+  labs(title = "La Liga Primera Vuelta Leaders (Messi Filtered)", 
+       y = "Expected Assists per 90", 
+       x = "Non-Penalty Expected Goals per 90", 
+       color = "Player's Team",
+       size = "Non-Penalty Goals",
+       caption = "Data: understat.com Graph: @ericdavidmorris
+       Marked players are in top 10% of either category, min. 500 minutes played") + 
+  scale_x_continuous(breaks = seq(0, 0.75, 0.05)) + 
+  scale_y_continuous(breaks = seq(0, 0.6, 0.05)) + 
+  theme_bw() +
+  theme(legend.position = "bottom") 
+
+quantile(understat$npg, c(0.5, 0.75, 0.80, 0.85, 0.90))
+
+quantile(understat$npxg90_plus_xa90, c(0.5, 0.75, 0.80, 0.85, 0.90))
+
+understat %>% 
+  ggplot(aes(x = npg, y = npxg90_plus_xa90, color = team)) +
+  geom_point(alpha = 0.75) +
+  geom_text_repel(aes(label = ifelse(npg >= 3.6, player, ifelse(npxg90_plus_xa90 >= 0.5, player, ''))), angle = 30, size = 2) +
+  scale_color_manual(values = c("Athletic Club" = "red2",
+                                "Alaves" = "blue",
+                                "Atletico Madrid" = "red",
+                                "Barcelona" = "maroon",
+                                "Celta Vigo" = "lightblue",
+                                "Eibar" = "dodgerblue4",
+                                "Espanyol" = "mediumblue",
+                                "Getafe" = "royalblue2",
+                                "Girona" = "firebrick1",
+                                "Leganes" = "dodgerblue",
+                                "Levante" = "red4",
+                                "Rayo Vallecano" = "gold",
+                                "Real Betis" = "green3",
+                                "Real Madrid" = "purple1",
+                                "Real Sociedad" = "royalblue3",
+                                "Real Valladolid" = "mediumpurple",
+                                "SD Huesca" = "midnightblue",
+                                "Sevilla" = "firebrick3",
+                                "Valencia"  = "gray0",
+                                "Villarreal" = "yellow3")) + 
+  labs(title = "La Liga Primera Vuelta Leaders", 
+       y = "Non-Penalty xG + xA per 90", 
+       x = "Non-Penalty Goals Scored", 
+       color = "Player's Team",
+       caption = "Data: understat.com Graph: @ericdavidmorris
+       Marked players are in top 10% of either category, min. 500 minutes played") + 
+  scale_x_continuous(breaks = seq(0, 17, 1)) + 
+  scale_y_continuous(breaks = seq(0, 1.25, 0.05)) + 
+  theme_bw() +
+  theme(legend.position = "bottom") 
+
+```
+
+##EPL Import
+
+All data was pulled manually from Understat (scraping was difficult due to UI). Statistics were filtered for players with a minimum of 500 minutes played. Keepers were filtered out. Data was for period up until 12/28/2018 (end of matchday 19).
+
+```{r EPL Import}
+epl_understat = 
+  read_excel("./data/understat_epl.xlsx", col_names = TRUE) %>% 
+  janitor::clean_names() %>% 
+  separate(x_g, into = c("xg", "trash"), sep = "\\+") %>% 
+  separate(xg, into = c("xg", "trash2"), sep = "\\-") %>% 
+  select(-trash, -trash2) %>% 
+  separate(n_px_g, into = c("npxg", "trash"), sep = "\\+") %>% 
+  separate(npxg, into = c("npxg", "trash2"), sep = "\\-") %>% 
+  select(-trash, -trash2) %>% 
+  separate(x_a, into = c("xa", "trash"), sep = "\\+") %>% 
+  separate(xa, into = c("xa", "trash2"), sep = "\\-") %>% 
+  select(-trash, -trash2) %>% 
+  mutate(xg90_plus_xa90 = x_g90 + x_a90,
+         npxg90_plus_xa90 = n_px_g90 + x_a90)
+```
+
+```{r EPL Charts}
+quantile(epl_understat$n_px_g90, c(0.5, 0.75, 0.80, 0.85, 0.90))
+
+quantile(epl_understat$x_a90, c(0.5, 0.75, 0.80, 0.85, 0.90))
+
+epl_understat %>% 
+  group_by(team) %>% 
+  summarize()
+
+epl_understat %>% 
+  ggplot(aes(x = n_px_g90, y = x_a90, color = team, size = npg)) +
+  geom_point(alpha = 0.75) +
+  geom_text_repel(aes(label = ifelse(n_px_g90 >= 0.36, player, ifelse(x_a90 >= 0.22, player, ''))), angle = 30, size = 2) +
+  scale_color_manual(values = c("Arsenal" = "firebrick1",
+                                "Bournemouth" = "gray0",
+                                "Brighton" = "dodgerblue",
+                                "Burnley" = "maroon",
+                                "Cardiff" = "brown1",     
+                                "Chelsea" = "blue",
+                                "Crystal Palace" = "purple1",
+                                "Everton" = "mediumblue",
+                                "Fulham" = "gray48",        
+                                "Huddersfield" = "yellow3",   
+                                "Leicester" = "cornflowerblue",       
+                                "Liverpool" = "red2",       
+                                "Manchester City" = "cadetblue2",  
+                                "Manchester United" = "firebrick3",
+                                "Newcastle United" = "gray12",       
+                                "Southampton" = "tomato3",    
+                                "Tottenham" = "snow3",       
+                                "Watford" = "yellow3",       
+                                "West Ham" = "violetred4",      
+                                "Wolverhampton Wanderers" = "orange1")) +
+  labs(title = "Premier League Primera Vuelta (First Half) Leaders", 
+       y = "Expected Assists per 90", 
+       x = "Non-Penalty Expected Goals per 90", 
+       color = "Player's Team",
+       size = "Non-Penalty Goals",
+       caption = "Data: understat.com Graph: @ericdavidmorris
+       Marked players are in top 10% of either category, min. 500 minutes played") + 
+  scale_x_continuous(breaks = seq(0, 0.85, 0.05)) + 
+  scale_y_continuous(breaks = seq(0, 0.5, 0.05)) + 
+  theme_bw() +
+  theme(legend.position = "bottom") 
+
+```
+
+## EPL + La Liga
+
+```{r}
+epl_liga = 
+  bind_rows(understat, epl_understat)
+
+quantile(epl_liga$n_px_g90, c(0.5, 0.75, 0.80, 0.85, 0.90, 0.95))
+
+quantile(epl_liga$x_a90, c(0.5, 0.75, 0.80, 0.85, 0.90, 0.95))
+
+quantile(epl_liga$npg, c(0.5, 0.75, 0.80, 0.85, 0.90, 0.95))
+
+epl_liga %>% 
+  ggplot(aes(x = n_px_g90, y = x_a90, size = npg, color = league)) +
+  geom_point(alpha = 0.5) +
+  geom_text_repel(aes(label = ifelse(n_px_g90 >= 0.44, player, ifelse(x_a90 >= 0.27, player, ''))), angle = 30, size = 2) +
+  labs(title = "EPL & La Liga Primera Vuelta Leaders", 
+       y = "Expected Assists per 90", 
+       x = "Non-Penalty Expected Goals per 90", 
+       caption = "Data: WhoScored Graph: @ericdavidmorris
+       Marked players are in top 5% of either category") + 
+  scale_x_continuous(breaks = seq(0, 0.825, 0.05)) + 
+  scale_y_continuous(breaks = seq(0, 0.6, 0.05)) + 
+  theme_bw() +
+  scale_color_manual(values = c("La Liga" = "black",
+                                "Premier League" = "purple4")) + 
+  theme(legend.position = "bottom") 
+```
+
