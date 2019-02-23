@@ -1,0 +1,85 @@
+---
+title: "Hockey PPG"
+author: "Eric Morris"
+date: "2/22/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(viridis)
+library(readxl)
+library(ggrepel)
+
+knitr::opts_chunk$set(
+  fig.align = "center",
+  dpi = 800
+)
+```
+
+## PPG Data
+
+All data was pulled from Hockey Reference Play Index. Statistics were filtered for players with a minimum of 40 games played in a season, since the last full-season NHL lockout. Data was pulled on February 22, 2019. 
+
+```{r Import}
+
+ppg = 
+  read_excel("./data/ppg_new.xlsx", col_names = TRUE) %>% 
+  janitor::clean_names() %>% 
+  mutate(points_perg = pts,
+         total_pts = pts_1) %>% 
+  select(-pts, -pts_1)
+
+```
+
+```{r Charting}
+
+quantile(ppg$points_perg, c(0.5, 0.75, 0.80, 0.85, 0.90, 0.95))
+
+quantile(ppg$total_pts, c(0.5, 0.75, 0.80, 0.85, 0.90, 0.95))
+
+quantile(ppg$total_point_shares, c(0.5, 0.75, 0.80, 0.85, 0.90, 0.95))
+
+quantile(ppg$shooting_perct, c(0.5, 0.75, 0.80, 0.85, 0.90, 0.95))
+
+ppg %>% 
+  ggplot(aes(x = total_pts, y = points_perg, color = season)) + #, color = team)) +
+  geom_point(alpha = 0.75) +
+  geom_text_repel(aes(label = ifelse(total_pts >= 103, player, ifelse(points_perg >= 1.322, player, ''))), angle = 30, size = 2) +
+  #scale_color_manual(values = c("Athletic Club" = "red2",
+  #                              "Alaves" = "blue",
+  #                              "Atletico Madrid" = "red",
+  #                              "Barcelona" = "maroon",
+  #                              "Celta Vigo" = "lightblue",
+  #                              "Eibar" = "dodgerblue4",
+  #                              "Espanyol" = "mediumblue",
+  #                              "Getafe" = "royalblue2",
+  #                              "Girona" = "firebrick1",
+  #                              "Leganes" = "dodgerblue",
+  #                              "Levante" = "red4",
+  #                              "Rayo Vallecano" = "gold",
+  #                              "Real Betis" = "green3",
+  #                              "Real Madrid" = "purple1",
+  #                              "Real Sociedad" = "royalblue3",
+  #                              "Real Valladolid" = "mediumpurple",
+  #                              "SD Huesca" = "midnightblue",
+  #                              "Sevilla" = "firebrick3",
+  #                              "Valencia"  = "gray0",
+  #                              "Villarreal" = "yellow3")) + 
+  labs(title = "NHL PPG since 2004-2005 Lockout", 
+       y = "Points Per Game", 
+       x = "Total Points", 
+       color = "Season",
+       caption = "Data: Hockey Reference Graph: @ericdavidmorris
+       Marked players are in top 10% of either category, min. 40GP") + 
+  scale_x_continuous(breaks = seq(40, 130, 10)) + 
+  scale_y_continuous(breaks = seq(1.0, 1.7, 0.1)) + 
+  #geom_hline(yintercept = 3.95, linetype = "dashed", color = "black") + 
+  #geom_vline(xintercept = 0.17, linetype = "dashed", color = "black") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+
+```
+
