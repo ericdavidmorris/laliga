@@ -1,0 +1,79 @@
+---
+title: "NBA Total MP"
+author: "Eric Morris"
+date: "3/11/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(viridis)
+library(readxl)
+library(ggrepel)
+
+knitr::opts_chunk$set(
+  fig.align = "center",
+  dpi = 800
+)
+```
+
+## MP Data from Basketball Reference
+
+All data was pulled from [Basketball Reference](https://www.basketball-reference.com/) on March 11, 2019. Included is total minutes played for the [regular season](https://www.basketball-reference.com/leaders/mp_career.html) and the [playoffs](https://www.basketball-reference.com/leaders/mp_career_p.html) since the 1951-1952 season. Only the top 200 in both regular season and playoff total minutes were pulled. 
+
+```{r Import}
+reg_total_mp = 
+  read_excel("./data/total_reg_mp_3_11_all_stats.xlsx", col_names = TRUE) %>% 
+  janitor::clean_names() %>% 
+  separate(player, into = c("player", "trash"), sep = "\\\\") %>% 
+  mutate(reg_total_mp = mp,
+         seasons = (to - from) + 1) %>% 
+  select(-rk, -trash)
+
+playoff_total_mp = 
+  read_excel("./data/playoff_total_3_11_all_stats.xlsx", col_names = TRUE) %>% 
+  janitor::clean_names() %>% 
+  separate(player, into = c("player", "trash"), sep = "\\\\") %>% 
+  mutate(playoff_total_mp = mp) %>% 
+  select(-rk, -trash)
+
+reg_playoff_merge = 
+  inner_join(reg_total_mp, playoff_total_mp, by = "player") %>% 
+  select(-ends_with(".x"), -ends_with(".y")) %>% 
+  mutate(total_mp = (reg_total_mp + playoff_total_mp))
+```
+
+## First Chart
+
+```{r chart}
+quantile(reg_playoff_merge$total_mp, c(0.5, 0.75, 0.80, 0.85, 0.90, 0.95))
+
+quantile(reg_playoff_merge$seasons, c(0.5, 0.75, 0.80, 0.85, 0.90, 0.95))
+
+reg_playoff_merge %>% 
+  ggplot(aes(x = seasons, y = total_mp)) +
+  geom_point(alpha = 1, size = 3) +
+  geom_text_repel(aes(label = ifelse(seasons >= 19, player, ifelse(total_mp >= 52630, player, ''))), angle = 30, size = 3) +
+  labs(title = "NBA Minutes Played Leaders Since 1951-1952", 
+       y = "Total Minutes Played (Regular Season + Playoffs)", 
+       x = "Seasons Played",
+       caption = "Data: Basketball Reference Graph: @ericdavidmorris
+       Marked players are in top 10% of either axis") + 
+  scale_x_continuous(breaks = seq(10, 22, 1)) + 
+  scale_y_continuous(breaks = seq(30000, 68000, 2000)) + 
+  theme_bw() +
+  theme(legend.position = "bottom")
+
+reg_playoff_merge %>% 
+  arrange(desc(total_mp)) %>% 
+  top_n(20) %>% 
+  rename("Player" = player,
+         "Regular Season Total MP" = reg_total_mp,
+         "Seasons Played" = seasons,
+         "Playoff Total MP" = playoff_total_mp,
+         "Total Minutes" = total_mp) %>% 
+  knitr::kable(align = "c")
+```
+
